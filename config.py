@@ -1,0 +1,3 @@
+POINTCLOUD_PATH = ""
+MESH_PATH = ""
+API_KEY = ""
