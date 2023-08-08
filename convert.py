@@ -8,3 +8,5 @@ def genMesh():
     point_cloud = pv.PolyData(points)
     mesh = point_cloud.reconstruct_surface()
     mesh.save(MESH_PATH)
+
+genMesh()

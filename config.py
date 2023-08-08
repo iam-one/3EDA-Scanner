@@ -1,3 +1,3 @@
-POINTCLOUD_PATH = ""
-MESH_PATH = ""
-API_KEY = ""
+POINTCLOUD_PATH = "./pointcloud.txt"
+MESH_PATH = "./mesh.stl"
+API_KEY = "undefined"

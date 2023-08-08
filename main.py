@@ -1,13 +1,16 @@
 from serial import Serial
 from convert import genMesh
 
+buffer = ""
+
 ser = Serial("/dev/ttyACM0", 9600, timeout=1)
 ser.open()
-ser.write()
 
 try:
     while True:
-        if ser.readable(): data = ser.readline()
+        ser.write("Stream is activate.")
+        if ser.readable(): buffer += ser.readline()
+        data = buffer
+        buffer = ""
 
-except:
-    ser.close()
+except: ser.close()
