@@ -1,4 +1,4 @@
 {
     "board": "arduino:avr:uno",
-    "sketch": "3edalinker/3edalinker.ino"
+    "sketch": "3eda-scanner/3eda-scanner.ino"
 }

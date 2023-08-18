@@ -12,5 +12,4 @@ try:
         if ser.readable(): buffer += ser.readline()
         data = buffer
         buffer = ""
-
 except: ser.close()
