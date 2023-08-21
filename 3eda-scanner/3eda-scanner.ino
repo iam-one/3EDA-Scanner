@@ -1,112 +1,103 @@
-const int IR_PIN = 14; // IR SENSOR PIN = A0
-const int S_STEPPIN = 2;
-const int S_DIRPIN = 3;
-const int P_STEPPIN = 4;
-const int P_DIRPIN = 5;
-const int TRIG_PIN = 6;
-const int LIMIT_PIN = 7;
+/*
+3EDA-Scanner by one
 
-const int MAX_STEP = 50;
-const int MAX_Z = 0;
-const int STEP_TIME = 200;
+exp_
+This scanner works for scan the small object.
+It gets distance from sensor to object, and calculate each point.
+And it converts each point to point cloud, passes to raspberry pi.
 
-const float STEP_ANGLE = 1.8;
-const float PLATE_RADIUS = 7.5; // cm
-const float MIN_DISTANCE = 5.25; // cm
-const float MAX_DISTANCE = PLATE_RADIUS + MIN_DISTANCE; // cm
-const int SENSOR_STEP = 1; // 2mm per 1 step
-const int PLATE_STEP = 20;
+*/
 
-boolean is_scan = false;
+// Pin Declare
+const int irPin = A0; // Sharp GP2Y0A41SK0F Model
+const int sStepPin = 2; // sensor stepper pin
+const int sDirPin = 3; // sensor stepper direction pin
+const int pStepPin = 4; // plate stepper pin
+const int pDirPin = 5; // plate stepper direction pin
+const int trigPin = 6; // scan trigger pin
+const int limitPin = 7; // scan emergency stop pin
 
-int distance = 0;
-int objectDistance = 0;
-int stepedZ = 0;
+// Constant Var Declare
+const float STEP_ANGLE = 1.8; // degree(unit)
+const float PLATE_RADIUS = 7.5; // cm(unit)
+const float MIN_DISTANCE = 5.25; // cm(unit)
+const float MAX_DISTANCE = PLATE_RADIUS + MIN_DISTANCE; // cm(unit)
 
-float pointX = 0;
-float pointY = 0;
-float pointZ = 0;
+const int STEP_HEIGHT = 10; // cm(unit), one z pointStep will be 0.5cm
+const int STEP_PER_LAYER = 40; // loop(unit), it must be LCM of 200(pointStep), it can be affect to the precision of mesh.
 
-void setup()
-{
+const int STEP_LAYER = 2 * STEP_HEIGHT;
+const int STEP_PER_POINT = 200 / STEP_PER_LAYER;
+
+// Main Var Declare
+float distance, objectDistance = 0.0;
+float pointX, pointY, pointZ = 0.0;
+
+boolean isWork = false;
+
+void setup(){
   Serial.begin(9600);
 
-  pinMode(TRIG_PIN, INPUT_PULLUP);
-  pinMode(LIMIT_PIN, INPUT_PULLUP);
-  pinMode(S_DIRPIN, OUTPUT);
-  pinMode(S_STEPPIN, OUTPUT);
-  pinMode(P_DIRPIN, OUTPUT);
-  pinMode(P_STEPPIN, OUTPUT);
+  pinMode(irPin, INPUT);
+  pinMode(trigPin, OUTPUT);
+  pinMode(limitPin, OUTPUT);
+
+  pinMode(sStepPin, OUTPUT);
+  pinMode(sDirPin, OUTPUT);
+  pinMode(pStepPin, OUTPUT);
+  pinMode(pDirPin, OUTPUT);
 }
 
-void loop()
-{
-  if (digitalRead(TRIG_PIN) == LOW)
-  {
-    for (int stepZ = 1; stepZ <= MAX_Z; stepZ++)
-    {
-      pointZ = 2 * stepZ;
-      for (int stepV = 1; stepV <= MAX_STEP; stepV++)
-      {
-        if (digitalRead(LIMIT_PIN) == LOW || distance > MAX_DISTANCE){
-          stepedZ = stepZ;
-          break;
+void loop(){
+  if (digitalRead(trigPin) == LOW){
+    isWork = true;
+    // TODO: add limit feature when emergency
+
+    for (int layerStep = 0; layerStep < STEP_LAYER; layerStep++){
+      for (int pointStep = 0; pointStep < STEP_PER_LAYER; pointStep++){
+        distance = 13 * pow(analogRead(irPin) * 0.0048828125, -1); // From GP2Y0A41SK0F Datasheet
+        objectDistance = MAX_DISTANCE - distance; // calculate distance from sensor to scan object
+
+        if (MIN_DISTANCE < distance < MAX_DISTANCE){ // if distance is valid
+          // get point from distance
+          pointX = -10 * objectDistance * sin(1.8 * STEP_PER_POINT * pointStep);
+          pointY = -10 * objectDistance * cos(1.8 * STEP_PER_POINT * pointStep);
+          pointZ = 0.5 * layerStep;
+
+          Serial.print(pointX, 6);
+          Serial.print(", ");
+          Serial.print(pointY, 6);
+          Serial.print(", ");
+          Serial.println(pointZ, 6);
         }
 
-        scanPoint(stepV);
         stepPlate(HIGH);
       }
       stepSensor(HIGH);
     }
 
-    for (int stepR; stepR < stepedZ; stepR++){
-      stepSensor(LOW);
-    }
-
-    sendPointcloud();
+    Serial.println("done");
   }
 }
 
-void sendPointcloud()
-{
-  Serial.print(pointX, 6);
-  Serial.print(", ");
-  Serial.print(pointY, 6);
-  Serial.print(", ");
-  Serial.println(pointZ, 6);
-}
-
-void scanPoint(int step)
-{
-  distance = 13 * pow(analogRead(IR_PIN) * 0.0048828125, -1); // cm
-
-  objectDistance = MAX_DISTANCE - distance;
-
-  pointX = -10 * objectDistance * sin(1.8 * step);
-  pointY = -10 * objectDistance * cos(1.8 * step);
-}
-
-void stepSensor(int dir)
-{
-  if (dir == 1)
-  digitalWrite(S_DIRPIN, dir);
-  for (int step = 1; step <= (200 * SENSOR_STEP); step++)
+void stepSensor(int dir){
+  digitalWrite(sDirPin, dir);
+  for (int stepSensor = 0; stepSensor < 500; stepSensor++)
   {
-    digitalWrite(S_STEPPIN, HIGH);
-    delayMicroseconds(STEP_TIME / 2);
-    digitalWrite(S_STEPPIN, LOW);
-    delayMicroseconds(STEP_TIME / 2);
+    digitalWrite(sStepPin, HIGH);
+    delayMicroseconds(50);
+    digitalWrite(sStepPin, LOW);
+    delayMicroseconds(50);
   }
 }
 
-void stepPlate(int dir)
-{
-  digitalWrite(P_DIRPIN, dir);
-  for (int step = 1; step <= (200 / PLATE_STEP); step++)
+void stepPlate(int dir){
+  digitalWrite(pDirPin, dir);
+  for (int stepPlate = 0; stepPlate < STEP_PER_POINT; stepPlate++)
   {
-    digitalWrite(P_STEPPIN, HIGH);
-    delayMicroseconds(STEP_TIME / 2);
-    digitalWrite(P_STEPPIN, LOW);
-    delayMicroseconds(STEP_TIME / 2);
+    digitalWrite(pStepPin, HIGH);
+    delayMicroseconds(50);
+    digitalWrite(pStepPin, LOW);
+    delayMicroseconds(50);
   }
 }
