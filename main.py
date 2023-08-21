@@ -7,9 +7,11 @@ ser = Serial("/dev/ttyACM0", 9600, timeout=1)
 ser.open()
 
 try:
+    ser.write("Stream is activate.")
+
     while True:
-        ser.write("Stream is activate.")
         if ser.readable(): buffer += ser.readline()
         data = buffer
         buffer = ""
+
 except: ser.close()
