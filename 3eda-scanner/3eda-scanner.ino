@@ -33,8 +33,9 @@ const int STEP_PER_POINT = 200 / STEP_PER_LAYER;
 float distance, objectDistance = 0.0;
 float pointX, pointY, pointZ = 0.0;
 
-boolean isWork = false;
+int tmpLayerStep, tmpPointStep = 0;
 
+// Work Block
 void setup(){
   Serial.begin(9600);
 
@@ -50,11 +51,17 @@ void setup(){
 
 void loop(){
   if (digitalRead(trigPin) == LOW){
-    isWork = true;
-    // TODO: add limit feature when emergency
-
     for (int layerStep = 0; layerStep < STEP_LAYER; layerStep++){
       for (int pointStep = 0; pointStep < STEP_PER_LAYER; pointStep++){
+        if (digitalRead(limitPin) == LOW){
+          // store step data to tmp var
+          tmpLayerStep = layerStep;
+          tmpPointStep = pointStep;
+
+          Serial.println("limited"); // send limit signal to raspberry pi via serial
+          break;
+        }
+
         distance = 13 * pow(analogRead(irPin) * 0.0048828125, -1); // From GP2Y0A41SK0F Datasheet
         objectDistance = MAX_DISTANCE - distance; // calculate distance from sensor to scan object
 
@@ -64,6 +71,7 @@ void loop(){
           pointY = -10 * objectDistance * cos(1.8 * STEP_PER_POINT * pointStep);
           pointZ = 0.5 * layerStep;
 
+          // send point data to raspberry pi via serial
           Serial.print(pointX, 6);
           Serial.print(", ");
           Serial.print(pointY, 6);
@@ -71,12 +79,15 @@ void loop(){
           Serial.println(pointZ, 6);
         }
 
-        stepPlate(HIGH);
+        stepPlate(HIGH); // move plate to scan next point
       }
-      stepSensor(HIGH);
+      stepSensor(HIGH); // move sensor to scan next layer
     }
 
-    Serial.println("done");
+    Serial.println("ended"); // send end signal to raspberry pi via serial
+
+    for (int layerStep = 0; layerStep < tmpLayerStep; layerStep++) stepSensor(LOW);
+    for (int pointStep = 0; pointStep < tmpPointStep; pointStep++) stepPlate(LOW);
   }
 }
 
