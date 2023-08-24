@@ -1,4 +1,5 @@
 {
     "board": "arduino:avr:uno",
-    "sketch": "3eda-scanner/3eda-scanner.ino"
+    "sketch": "3eda-scanner/3eda-scanner.ino",
+    "port": "/dev/tty.usbmodem21201"
 }

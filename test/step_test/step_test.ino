@@ -1,32 +1,32 @@
-const int DIRPIN = 2;
-const int STEPPIN = 3;
-const int STEP_TIME = 100;
-const int MAX_STEP = 20;
+const int dirPin = 2;
+const int stepPin = 3;
 
 void setup(){
-    Serial.begin(9600);
+  Serial.begin(9600);
+  
+  pinMode(dirPin,OUTPUT);
+  pinMode(stepPin,OUTPUT);
 }
 
 void loop(){
-    stepMotor(HIGH);
-    delay(1000);
-    Serial.println("Step HIGH is Done");
+  /*
+  stepMotor(HIGH);
+  Serial.println("step high is done");
+  delay(1000);
 
-    stepMotor(LOW);
-    delay(1000);
-    Serial.println("Step LOW is Done");
+  stepMotor(LOW);
+  Serial.println("step low is done");
+  delay(1000);
+  */
 }
 
-void stepMotor(int dir)
-{
-  digitalWrite(DIRPIN, dir);
-  for (int step = 1; step <= MAX_STEP; step++)
-  {
-    digitalWrite(STEPPIN, HIGH);
-    delayMicroseconds(STEP_TIME / 2);
-    digitalWrite(STEPPIN, LOW);
-    delayMicroseconds(STEP_TIME / 2);
+void stepMotor(int dir){
+  digitalWrite(dirPin, dir);
 
-    Serial.println(step);
+  for (int step = 0; step < 200; step++){
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(2000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(2000);
   }
 }

@@ -10,10 +10,10 @@ And it converts each point to point cloud, passes to raspberry pi.
 
 // Pin Declare
 const int irPin = A0; // Sharp GP2Y0A41SK0F Model
-const int sStepPin = 2; // sensor stepper pin
-const int sDirPin = 3; // sensor stepper direction pin
-const int pStepPin = 4; // plate stepper pin
-const int pDirPin = 5; // plate stepper direction pin
+const int sDirPin = 2; // sensor stepper direction pin
+const int sStepPin = 3; // sensor stepper pin
+const int pDirPin = 4; // plate stepper direction pin
+const int pStepPin = 5; // plate stepper pin
 const int trigPin = 6; // scan trigger pin
 const int limitPin = 7; // scan emergency stop pin
 
@@ -33,6 +33,7 @@ const int STEP_PER_POINT = 200 / STEP_PER_LAYER;
 float distance, objectDistance = 0.0;
 float pointX, pointY, pointZ = 0.0;
 
+boolean isLimited = false;
 int tmpLayerStep, tmpPointStep = 0;
 
 // Work Block
@@ -40,8 +41,8 @@ void setup(){
   Serial.begin(9600);
 
   pinMode(irPin, INPUT);
-  pinMode(trigPin, OUTPUT);
-  pinMode(limitPin, OUTPUT);
+  pinMode(trigPin,INPUT_PULLUP);
+  pinMode(limitPin, INPUT_PULLUP);
 
   pinMode(sStepPin, OUTPUT);
   pinMode(sDirPin, OUTPUT);
@@ -58,6 +59,7 @@ void loop(){
           tmpLayerStep = layerStep;
           tmpPointStep = pointStep;
 
+          isLimited = true;
           Serial.println("limited"); // send limit signal to raspberry pi via serial
           break;
         }
@@ -65,7 +67,7 @@ void loop(){
         distance = 13 * pow(analogRead(irPin) * 0.0048828125, -1); // From GP2Y0A41SK0F Datasheet
         objectDistance = MAX_DISTANCE - distance; // calculate distance from sensor to scan object
 
-        if (MIN_DISTANCE < distance < MAX_DISTANCE){ // if distance is valid
+        if (MIN_DISTANCE < distance && distance < MAX_DISTANCE){ // if distance is valid
           // get point from distance
           pointX = -10 * objectDistance * sin(1.8 * STEP_PER_POINT * pointStep);
           pointY = -10 * objectDistance * cos(1.8 * STEP_PER_POINT * pointStep);
@@ -80,7 +82,12 @@ void loop(){
         }
 
         stepPlate(HIGH); // move plate to scan next point
+        delay(100);
       }
+      if (isLimited == true) {
+        break;
+      }
+      
       stepSensor(HIGH); // move sensor to scan next layer
     }
 
@@ -88,6 +95,8 @@ void loop(){
 
     for (int layerStep = 0; layerStep < tmpLayerStep; layerStep++) stepSensor(LOW);
     for (int pointStep = 0; pointStep < tmpPointStep; pointStep++) stepPlate(LOW);
+
+    isLimited = false;
   }
 }
 
@@ -96,9 +105,9 @@ void stepSensor(int dir){
   for (int stepSensor = 0; stepSensor < 500; stepSensor++)
   {
     digitalWrite(sStepPin, HIGH);
-    delayMicroseconds(50);
+    delayMicroseconds(2000);
     digitalWrite(sStepPin, LOW);
-    delayMicroseconds(50);
+    delayMicroseconds(2000);
   }
 }
 
@@ -107,8 +116,8 @@ void stepPlate(int dir){
   for (int stepPlate = 0; stepPlate < STEP_PER_POINT; stepPlate++)
   {
     digitalWrite(pStepPin, HIGH);
-    delayMicroseconds(50);
+    delayMicroseconds(2000);
     digitalWrite(pStepPin, LOW);
-    delayMicroseconds(50);
+    delayMicroseconds(2000);
   }
 }
