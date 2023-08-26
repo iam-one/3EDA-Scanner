@@ -69,8 +69,8 @@ void loop(){
 
         if (MIN_DISTANCE < distance && distance < MAX_DISTANCE){ // if distance is valid
           // get point from distance
-          pointX = -10 * objectDistance * sin(1.8 * STEP_PER_POINT * pointStep);
-          pointY = -10 * objectDistance * cos(1.8 * STEP_PER_POINT * pointStep);
+          pointX = -1 * objectDistance * sin(radians(1.8 * STEP_PER_POINT * (pointStep + 1)));
+          pointY = -1 * objectDistance * cos(radians(1.8 * STEP_PER_POINT * (pointStep + 1)));
           pointZ = 0.5 * layerStep;
 
           // send point data to raspberry pi via serial
@@ -87,7 +87,7 @@ void loop(){
       if (isLimited == true) {
         break;
       }
-      
+
       stepSensor(HIGH); // move sensor to scan next layer
     }
 

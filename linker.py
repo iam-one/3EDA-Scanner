@@ -1,17 +1,27 @@
-from serial import Serial
-from convert import genMesh
+import serial
+import numpy as np
+import pyvista as pv
+
+from config import POINTCLOUD_PATH
 
 buffer = ""
 
-ser = Serial("/dev/ttyACM0", 9600, timeout=1)
+ser = serial.Serial()
+
+ser.port = "/dev/tty.usbmodem21201"
+ser.baudrate = 9600
+ser.timeout = 0
+
 ser.open()
 
-try:
-    ser.write("Stream is activate.")
-
+with open(POINTCLOUD_PATH, 'w') as file:
     while True:
-        if ser.readable(): buffer += ser.readline()
-        data = buffer
-        buffer = ""
+        if ser.readable():
+            received = ser.readline()
+            print(received)
 
-except: ser.close()
+            if received == "ended": break;
+            else:
+                file.wrtie(received)
+
+    ser.close()
