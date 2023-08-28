@@ -16,3 +16,6 @@ def genMesh():
     # pl.add_mesh(recons, color=True, show_edges=True)
     # pl.add_title('Reconstructed Surface')
     # pl.show()
+
+if __name__ == "main":
+    genMesh()
