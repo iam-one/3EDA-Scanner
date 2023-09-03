@@ -60,7 +60,6 @@ void loop(){
           tmpPointStep = pointStep;
 
           isLimited = true;
-          Serial.println("limited"); // send limit signal to raspberry pi via serial
           break;
         }
 
@@ -80,13 +79,9 @@ void loop(){
           Serial.print(", ");
           Serial.println(pointZ, 6);
         }
-
         stepPlate(HIGH); // move plate to scan next point
-        delay(100);
       }
-      if (isLimited == true) {
-        break;
-      }
+      if (isLimited == true) break;
 
       stepSensor(HIGH); // move sensor to scan next layer
     }

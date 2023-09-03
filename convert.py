@@ -9,13 +9,13 @@ def genMesh():
 
     recons.save(MESH_PATH)
 
-    # pl = pv.Plotter(shape=(1, 2))
-    # pl.add_mesh(points)
-    # pl.add_title('Point Cloud of 3D Surface')
-    # pl.subplot(0, 1)
-    # pl.add_mesh(recons, color=True, show_edges=True)
-    # pl.add_title('Reconstructed Surface')
-    # pl.show()
+    pl = pv.Plotter(shape=(1, 2))
+    pl.add_mesh(points)
+    pl.add_title('Point Cloud of 3D Surface')
+    pl.subplot(0, 1)
+    pl.add_mesh(recons, color=True, show_edges=True)
+    pl.add_title('Reconstructed Surface')
+    pl.show()
 
-if __name__ == "main":
+if __name__ == "__main__":
     genMesh()
